@@ -1,13 +1,10 @@
 const https = require('https');
 
 module.exports = async (req, res) => {
-  // CORS başlıqları (Brauzerin bloklamaması üçün)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', '*');
-  res.setHeader('Access-Control-Expose-Headers', '*');
   
-  // Brauzerin ilk göndərdiyi yoxlama (OPTIONS) sorğusuna müsbət cavab
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -17,26 +14,38 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Vercel bəzən body-ni obyekt, bəzən string kimi verir
     let bodyData = req.body;
     if (typeof bodyData === 'string') {
       try { bodyData = JSON.parse(bodyData); } catch(e) {}
     }
-    
     const data = JSON.stringify(bodyData);
+
+    // TLS 1.2-yə məcbur edirik və bağlantını açıq saxlayırıq
+    const agent = new https.Agent({
+      rejectUnauthorized: false, // SSL sertifikatını ignore et
+      minVersion: 'TLSv1.2',
+      maxVersion: 'TLSv1.2', 
+      keepAlive: true
+    });
 
     const options = {
       hostname: 'c2b-fbusiness.customs.gov.az',
       port: 443,
       path: '/api/v1/dictionaries/calcAutoDuty',
       method: 'POST',
+      agent: agent,
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(data),
         'lang': 'az',
-        'requestSource': '1'
-      },
-      rejectUnauthorized: false // SSL keçidi
+        'requestSource': '1',
+        // Dövlət saytını aldatmaq üçün real brauzer başlıqları:
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'az,en-US;q=0.9,en;q=0.8',
+        'Origin': 'https://c2b-fbusiness.customs.gov.az',
+        'Referer': 'https://c2b-fbusiness.customs.gov.az/'
+      }
     };
 
     const proxyReq = https.request(options, (proxyRes) => {
