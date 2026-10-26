@@ -1,17 +1,18 @@
 const https = require('https');
 
-export default async function handler(req, res) {
-  // CORS Ayarları
+module.exports = async (req, res) => {
+  // CORS Başlıqları (Brauzerin icazə verməsi üçün)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, lang, requestSource');
   
+  // Brauzerin ilk göndərdiyi OPTIONS sorğusuna müsbət cavab veririk
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
   
   if (req.method !== 'POST') {
-    return res.status(405).end();
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -28,7 +29,7 @@ export default async function handler(req, res) {
         'lang': 'az',
         'requestSource': '1'
       },
-      // ★ BÜTÜN SSL (525) XƏTALARINI HƏLL EDƏN HİSSƏ ★
+      // ★ SSL XƏTASINI (525) KEÇMƏK ÜÇÜN ★
       rejectUnauthorized: false 
     };
 
@@ -50,4 +51,4 @@ export default async function handler(req, res) {
   } catch (err) {
     res.status(500).json({ code: 500, exception: { errorMessage: err.message } });
   }
-}
+};
