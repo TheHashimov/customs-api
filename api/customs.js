@@ -15,10 +15,9 @@ export default async function handler(req, res) {
   try {
     const bodyData = req.body;
     
-    // ★ SİZİN GOOGLE APPS SCRIPT LİNKİNİZ ★
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN5umVc4pb32ew4fGHM22drYo65itJx-cO34-c2GeCByBtRElXFc6TpDB8tCtjhaO_/exec";
+    // Sənin Google Apps Script linkin
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxB-V7IpQ5WRblAY9AXOOgIuJTW-X8iwxAKMwIN5ISFltQSbR7dJxau6CQixkPrFE3s/exec";
     
-    // Google Apps Script yalnız GET sorğusunu qəbul edir (data= parametri ilə)
     const url = new URL(APPS_SCRIPT_URL);
     url.searchParams.append('data', JSON.stringify(bodyData));
 
@@ -31,7 +30,7 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      throw new Error(`Google Apps Script xətası: ${response.status}`);
+      throw new Error(`Google Status: ${response.status}`);
     }
 
     const text = await response.text();
