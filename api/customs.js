@@ -1,12 +1,13 @@
 const https = require('https');
 
 module.exports = async (req, res) => {
-  // CORS Başlıqları (Brauzerin icazə verməsi üçün)
+  // CORS başlıqları (Brauzerin bloklamaması üçün)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, lang, requestSource');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Expose-Headers', '*');
   
-  // Brauzerin ilk göndərdiyi OPTIONS sorğusuna müsbət cavab veririk
+  // Brauzerin ilk göndərdiyi yoxlama (OPTIONS) sorğusuna müsbət cavab
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -16,7 +17,13 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const data = JSON.stringify(req.body);
+    // Vercel bəzən body-ni obyekt, bəzən string kimi verir
+    let bodyData = req.body;
+    if (typeof bodyData === 'string') {
+      try { bodyData = JSON.parse(bodyData); } catch(e) {}
+    }
+    
+    const data = JSON.stringify(bodyData);
 
     const options = {
       hostname: 'c2b-fbusiness.customs.gov.az',
@@ -29,16 +36,13 @@ module.exports = async (req, res) => {
         'lang': 'az',
         'requestSource': '1'
       },
-      // ★ SSL XƏTASINI (525) KEÇMƏK ÜÇÜN ★
-      rejectUnauthorized: false 
+      rejectUnauthorized: false // SSL keçidi
     };
 
     const proxyReq = https.request(options, (proxyRes) => {
       let body = '';
       proxyRes.on('data', (chunk) => body += chunk);
-      proxyRes.on('end', () => {
-        res.status(200).send(body);
-      });
+      proxyRes.on('end', () => res.status(200).send(body));
     });
 
     proxyReq.on('error', (e) => {
